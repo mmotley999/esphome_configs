@@ -1,0 +1,88 @@
+# ##################################
+# Martin Jerry Light Switch MJ-S01
+# ##################################
+# D2 GPIO4: red led (inverted)
+# D1 GPIO5: blue led (inverted)
+# D6 GPIO12: relay
+# D7 GPIO13: button (inverted, input_pullup)
+# ##################################
+
+#
+# THIS VERSION PRESENTS TO HA AS A 'LIGHT' ENTITY
+#
+
+substitutions:
+  # https://esphome.io/guides/configuration-types.html#substitutions
+  device_name: switch_change_me
+  friendly_name: Change Me
+
+esphome:
+  name: $device_name
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+web_server:
+  port: 80
+
+status_led: 
+  # https://esphome.io/components/status_led
+  pin:
+    number: GPIO4   # Red LED
+    inverted: True
+
+
+binary_sensor:
+  - platform: gpio
+    # https://esphome.io/components/switch/gpio
+    name: ${friendly_name} Button
+    id: button
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: True
+    internal: True
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+      - light.toggle: main_light
+
+
+# Use a power supply for the blue LED
+# A little trick to have it turn on when the light turns on
+power_supply:
+  - id: blue_led
+    pin:
+      number: GPIO5
+      inverted: True
+    enable_time: 1ms
+    keep_on_time: 1ms
+
+# Relay output, tie to the blue LED via power_supply
+output:
+  - platform: gpio
+    # https://esphome.io/components/output/gpio
+    id: relay
+    # Tie Blue LED to relay
+    power_supply: blue_led
+    pin:
+      number: GPIO12
+
+#
+light:
+  - platform: binary
+    name: $friendly_name
+    output: relay
+    id: main_light
