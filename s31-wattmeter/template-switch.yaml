@@ -1,0 +1,26 @@
+# Template switches
+
+- platform: template
+  switches:
+    living_room_tv:
+      friendly_name: Living Room TV
+      value_template: "{{ states('binary_sensor.livingroom_tv_power') }}"
+      turn_on:
+        - service: homeassistant.turn_on
+          entity_id: media_player.yamaha_receiver         
+        - service: esphome.living_room_ir_tv_on
+        - delay: 2
+        - service: homeassistant.turn_on
+          entity_id: media_player.nvidia_shield_living_room
+      turn_off:
+        - service: homeassistant.turn_off
+          entity_id: media_player.yamaha_receiver         
+        - service: esphome.living_room_ir_tv_off
+        - delay: 1
+        - service: esphome.living_room_ir_tv_off
+      icon_template: >-
+        {% if is_state("switch.living_room_tv", "on") %}
+            mdi:television-guide
+        {% else %}
+            mdi:television
+        {% endif %}
