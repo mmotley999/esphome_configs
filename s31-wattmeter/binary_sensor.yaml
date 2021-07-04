@@ -1,0 +1,14 @@
+#   livingroom_tv_power:  Based on wattage from S31
+#
+- platform: template
+  sensors:
+    livingroom_tv_power:
+      friendly_name: "Living Room TV"
+      value_template: >-
+        {{ states('sensor.living_room_tv_power')|int > 90 }}
+      icon_template: >-
+        {% if is_state("binary_sensor.livingroom_tv_power", "on") %}
+            mdi:television-guide
+        {% else %}
+            mdi:television
+        {% endif %}      
