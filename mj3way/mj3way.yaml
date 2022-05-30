@@ -1,0 +1,118 @@
+# ##################################
+# Martin Jerry 3-way Switch ST01
+# ##################################
+# D2 GPIO4: red led (inverted)
+# D1 GPIO5: blue led (inverted)
+# D6 GPIO12: relay
+# D7 GPIO13: button (inverted, input_pullup)
+# ##################################
+
+# This config has been tested in a 3-way setup with
+#   - Martin Jerry 3-way on the hot side (from panel)
+#   - Normal (dumb) 3-way switch on load side
+#   - Two traveler wires
+#
+# It appears that the MJ has a secondary MCU on the power
+# supply board (the one underneath the board wit the ESP).
+# That MCU toggles the same GPIO as the main button (GPIO13)
+# when it detects the remote dumb switch toggles its position.
+# Hence it acts as a normal 3-way switch.
+#
+# This presents to Home Assistant as a LIGHT.
+# Can present as a switch by unremarking
+
+substitutions:
+  device_name: mj3waytest
+  friendly_name: MJ 3way Test
+
+esphome:
+  name: $device_name
+  comment: $friendly_name
+  
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+
+web_server:
+  port: 80
+
+status_led: 
+  # https://esphome.io/components/status_led
+  pin:
+    number: GPIO4   # Red LED
+    inverted: True
+
+
+# Main button.  Note that this gets toggled by the MCU on
+# the power supply board when the normal 3-way switch is
+# toggled remotely, so we only need to worry about this
+# and toggle the relay, as it will work whether done at the
+# MJ switch itself, or when the remote (dumb) 3way is toggled.
+binary_sensor:
+  - platform: gpio
+    # https://esphome.io/components/switch/gpio
+    name: ${friendly_name} Button
+    id: button
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+      inverted: True
+    internal: True
+    filters:
+      - delayed_on: 10ms
+      - delayed_off: 10ms
+    on_press:
+#      - switch.toggle: relay
+      - light.toggle: main_light
+      
+switch:
+  - platform: gpio
+    # https://esphome.io/components/switch/gpio
+    name: ${friendly_name} Blue LED
+    id: blue_led
+    pin:
+      number: GPIO5
+      inverted: True
+    internal: True
+
+#  Use this is if you wish to present as a SWITCH
+#  Also remark out LIGHT below.
+#  - platform: gpio
+#    name: $friendly_name
+#    id: relay
+#    pin:
+#      number: GPIO12
+#    on_turn_on:
+#      - switch.turn_on:  blue_led
+#    on_turn_off:
+#      - switch.turn_off: blue_led
+
+output:
+  - platform: gpio
+    # https://esphome.io/components/output/gpio
+    id: relay
+    pin:
+      number: GPIO12
+
+# Use this if you wish to present as a LIGHT.
+# Comment out the SWITCH portion above as well.
+light:
+  - platform: binary
+    name: $friendly_name
+    output: relay
+    id: main_light
+    on_turn_on:
+      - switch.turn_on:  blue_led
+    on_turn_off:
+      - switch.turn_off: blue_led
