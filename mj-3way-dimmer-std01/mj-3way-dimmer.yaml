@@ -19,7 +19,6 @@
 substitutions:
   device_name: 3way-mj-dimmer # change
   friendly_name: Martin Jerry 3way Dimmer # change
-  icon: "mdi:light-switch"
   
 esphome:
   name: ${device_name}
